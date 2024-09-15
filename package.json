@@ -14,6 +14,9 @@
   },
   "dependencies": {
     "@headlessui/vue": "^1.7.23",
+    "@heroicons/vue": "^2.1.5",
+    "@volar/language-server": "2.4.0-alpha.18",
+    "@vue/language-server": "2.0.28",
     "vue": "^3.4.29"
   },
   "devDependencies": {
