@@ -27,7 +27,6 @@
         leave="transition ease-in duration-100"
         leaveFrom="opacity-100"
         leaveTo="opacity-0"
-        @after-leave="query = ''"
       >
         <ComboboxOptions
           :class="hasNotFound ? 'bg-red-50': 'bg-green-50'"
@@ -106,7 +105,7 @@ type IPersonOrNull = IPerson | null
 // Vue Event
 onMounted(() => {
   if (isStudentLoaded.value) return
-  fetch('src/assets/student_map.json')
+  fetch('/student_map.json')
     .then(response => response.json())
     .then((data: RawStudent) => transformStudent(data))
     .then(() => isStudentLoaded.value = true)

@@ -30,7 +30,7 @@
 
         <TabPanel>
           <h1>请输入文字</h1>
-          <img src="/src/assets/teresa.gif" alt="TeriTeri">
+          <img src="/teresa.gif" alt="TeriTeri">
         </TabPanel>
 
         <TabPanel
