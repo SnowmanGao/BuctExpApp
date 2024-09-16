@@ -106,7 +106,7 @@ type IPersonOrNull = IPerson | null
 // Vue Event
 onMounted(() => {
   if (isStudentLoaded.value) return
-  fetch('./src/assets/student_map.json')
+  fetch('src/assets/student_map.json')
     .then(response => response.json())
     .then((data: RawStudent) => transformStudent(data))
     .then(() => isStudentLoaded.value = true)
