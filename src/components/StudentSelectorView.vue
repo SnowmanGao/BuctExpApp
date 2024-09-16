@@ -15,9 +15,11 @@
           :displayValue="person => (person as IPersonOrNull)?.sid ?? ''"
           class="w-full py-2 pl-3 pr-10 text-base leading-5 text-gray-900"
           placeholder="请输入学号..."
+          type="search"
           @change="query = $event.target.value"
           @focusin="hasFocus = true"
-          @focusout="hasFocus = false"
+          @focusout="hasFocus = false; onSelectedPerson();"
+          @keydown="onInputKeyDown($event)"
         />
         <ComboboxButton class="absolute inset-y-0 right-0 flex items-center pr-2">
           <ChevronUpDownIcon aria-hidden="true" class="h-5 w-5 text-gray-400" />
@@ -47,7 +49,7 @@
             v-slot="{ selected, active }"
             :value="person"
             as="template"
-            @click="onSelectPerson(input.$el)"
+            @click="onSelectedPerson()"
           >
             <li
               :class="{'bg-teal-600': selected, 'bg-teal-600/10': active && !selected}"
@@ -80,7 +82,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, type ComputedRef, nextTick, onMounted, type Ref, ref } from 'vue'
+import { computed, type ComputedRef, onMounted, type Ref, ref } from 'vue'
 import {
   Combobox,
   ComboboxButton,
@@ -93,6 +95,7 @@ import { CheckIcon, ChevronUpDownIcon, ExclamationCircleIcon } from '@heroicons/
 import type { RawStudent } from '@/core/MainModel'
 import { curStudentId, isStudentLoaded, studentDict, transformStudent } from '@/core/MainSystem'
 import { arrayTake } from '@/core/Utils'
+import { StorageSystem } from '@/core/StorageSystem'
 import SnowTag from '@/components/SnowTag.vue'
 
 interface IPerson {
@@ -105,10 +108,11 @@ type IPersonOrNull = IPerson | null
 // Vue Event
 onMounted(() => {
   if (isStudentLoaded.value) return
-  fetch('/student_map.json')
+  fetch('/resources/student_map.json')
     .then(response => response.json())
     .then((data: RawStudent) => transformStudent(data))
     .then(() => isStudentLoaded.value = true)
+    .then(onLoadedMap)
 })
 
 // Vue Event
@@ -122,24 +126,37 @@ onMounted(() => {
 })
 
 // My Event
-function onSelectPerson(el: HTMLElement) {
-  nextTick(() => el.blur())
-  curStudentId.value = selected.value?.sid ?? null
+function onSelectedPerson() {
+  // TODO: 点击选项展开按钮会反复触发更新
+  input.value.$el.blur()
+  if (selected.value?.sid)
+    curStudentId.value = selected.value?.sid
+  if (input.value.$el.value === '')
+    curStudentId.value = null
+  StorageSystem.saveSid(curStudentId.value)
 }
 
-addEventListener('focusout', (e) =>
-  onSelectPerson(e.target as HTMLElement))
+// My Event
+function onLoadedMap() {
+  curStudentId.value = StorageSystem.loadSid()
+  input.value.$el.value = curStudentId.value
+  query.value = curStudentId.value ?? ''
+}
+
+function onInputKeyDown(e: KeyboardEvent) {
+  if (e.key == 'Enter') onSelectedPerson()
+}
 
 // 当前选中的人，用 IPerson 表示
 const selected: Ref<IPersonOrNull> = ref(null)
-
-// 用户实际输入的内容
+// 用户实际输入的内容（单向绑定输入框内容）
 const query = ref('')
 // 输入框 HTMLElement
 const input = ref()
 
 // 焦点是否在输入框，用于控制输入框 border 颜色
 const hasFocus = ref(false)
+
 // 是否查无此人，用于控制输入框 border 颜色和选项背景颜色
 const hasNotFound = computed(() => hasFocus.value && filteredPeople.value.length == 0)
 // 获取颜色映射
@@ -177,6 +194,7 @@ const filteredPeople = computed(() =>
 
 #cb-input-box {
   border-top-left-radius: 0;
+  transition: border-color ease-in 0.1s;
 }
 
 #otto-box {

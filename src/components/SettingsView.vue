@@ -1,6 +1,6 @@
 <template>
-  <div
-    class="rounded-xl bg-white p-4 ring-white/60 ring-offset-2 ring-offset-blue-400 hover:outline-none hover:ring-2">
+  <div :class="['rounded-xl bg-white p-4 ring-white/60 ring-offset-2 ring-offset-blue-400',
+                'snow-card hover:outline-none hover:ring-2']">
     <div class="flex flex-col space-y-4">
       <p class="ml-1 font-light text-2xl">欢迎</p>
       <hr>
@@ -9,8 +9,8 @@
     </div>
   </div>
 
-  <div
-    class="rounded-xl bg-white p-4 ring-white/60 ring-offset-2 ring-offset-blue-400 hover:outline-none hover:ring-2">
+  <div :class="['rounded-xl bg-white p-4 ring-white/60 ring-offset-2 ring-offset-blue-400',
+                'snow-card hover:outline-none hover:ring-2']">
     <div class="flex flex-col space-y-4">
       <p class="ml-1 font-light text-2xl">个人信息</p>
       <hr class="h-3">

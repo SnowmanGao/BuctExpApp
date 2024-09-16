@@ -29,36 +29,10 @@
         </TabPanel>
 
         <TabPanel>
-          <h1>请输入文字</h1>
-          <img src="/teresa.gif" alt="TeriTeri">
         </TabPanel>
 
-        <TabPanel
-          class="rounded-xl bg-white p-3 ring-white/60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2"
-        >
-          <ul class="space-y-2">
-            <li v-for="message in messages"
-                :key="message.id"
-                class="relative rounded-md p-3 hover:bg-gray-100"
-            >
-              <h3 class="text-sm font-medium leading-5">{{ message.title }}</h3>
-
-              <ul class="mt-1 flex space-x-1 text-xs font-normal leading-4 text-gray-500">
-                <li>{{ message.date }}</li>
-                <li>&middot;</li>
-                <li>{{ message.commentCount }} comments</li>
-                <li>&middot;</li>
-                <li>{{ message.shareCount }} shares</li>
-              </ul>
-
-              <a :class="[
-                  'absolute inset-0 rounded-md',
-                  'ring-blue-400 focus:z-10 focus:outline-none focus:ring-2',
-                ]"
-                 href="#"
-              />
-            </li>
-          </ul>
+        <TabPanel>
+          <AllCoursesView />
         </TabPanel>
 
       </TabPanels>
@@ -70,6 +44,7 @@
 import { ref } from 'vue'
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/vue'
 import SettingsView from '@/components/SettingsView.vue'
+import AllCoursesView from '@/components/AllCoursesView.vue'
 
 const titles = ['置设', '近期排课', '全部排课']
 

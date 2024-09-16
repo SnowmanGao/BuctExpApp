@@ -1,39 +1,100 @@
-import type { RawJikken, RawStudent, StudentData } from '@/core/MainModel.js'
-import { type Ref, ref, type ShallowRef, shallowRef } from 'vue'
+import type { JikkenData, JikkenTimetable, RawJikken, RawStudent, StudentData } from '@/core/MainModel.js'
+import { TimeOfDay } from '@/core/MainModel.js'
+import { computed, type Ref, ref, type ShallowRef, shallowRef } from 'vue'
 
 // 学生字典
 type StudentDictType = { [stu_id: string]: StudentData }
 const studentDict: ShallowRef<StudentDictType> = shallowRef({})
-let isStudentLoaded: Ref<boolean> = ref(false)
+const isStudentLoaded: Ref<boolean> = ref(false)
 
-// 实验安排字典
-type JikkenDictType = { [stu_id: string]: StudentData }
+// 实验安排字典，和时间表一起加载
+type JikkenDictType = { [lab_id: string]: JikkenData }
 const jikkenDict: ShallowRef<JikkenDictType> = shallowRef({})
-let isJikkenLoaded: Ref<boolean> = ref(false)
+type TimeDictType = { [week: string]: { [time in TimeOfDay]: number[] } }
+const timeDict: ShallowRef<TimeDictType> = shallowRef({})
+const isJikkenLoaded: Ref<boolean> = ref(false)
 
-// 用学号表示当前选中的学生，为 null 则说明未选中任何学生
+// 当前选中的学生的 ID，为 null 则说明未选中任何学生
 const curStudentId: Ref<string | null> = ref(null)
-
-
-function transformJikken(raw: RawJikken) {
-
-}
+// 当前选中的学生，为 null 则说明未选中任何学生
+const curStudent: Ref<StudentData | null> = computed(() => {
+    if (curStudentId.value === null) return null
+    return studentDict.value[curStudentId.value]
+})
 
 function transformStudent(raw: RawStudent) {
-    const cls_map = raw.class
-    const stu_map = raw.student
-    let tempDict: StudentDictType = {}
-    for (const sid in stu_map) {
-        tempDict[sid] = {
-            batch: stu_map[sid][0],
-            class: cls_map[stu_map[sid][1]],
-            group: stu_map[sid][2]
+    const cls = raw.class
+    const stu = raw.student
+    let temp: StudentDictType = {}
+    for (const sid in stu) {
+        temp[sid] = {
+            batch: stu[sid][0], class: cls[stu[sid][1]], group: stu[sid][2]
         }
     }
-    studentDict.value = tempDict
+    studentDict.value = temp
+}
+
+function transformJikken(raw: RawJikken) {
+    const jk = raw.jikken
+    const tt = raw.timetable
+    let temp1: JikkenDictType = {}
+    let temp2: TimeDictType = {}
+    for (const id in jk) {
+        temp1[id] = {
+            title: jk[id][0], place: jk[id][1], teacher: jk[id][2]
+        }
+    }
+    for (const week in tt) {
+        temp2[week] = {
+            [TimeOfDay.Morning]: tt[week][TimeOfDay.Morning],
+            [TimeOfDay.Afternoon]: tt[week][TimeOfDay.Afternoon],
+            [TimeOfDay.Evening]: tt[week][TimeOfDay.Evening]
+        }
+    }
+    jikkenDict.value = temp1
+    timeDict.value = temp2
+}
+
+function queryJikkenOfBatch(batch: number): JikkenTimetable {
+    const result: JikkenTimetable = []
+    Object
+        .entries(timeDict.value)
+        .forEach(([week, schedules]) => {
+            Object
+                .values(schedules)
+                .forEach((schedule, timeOfDay) => {
+                    const lab_id = schedule.indexOf(batch)
+                    if (lab_id != -1) {
+                        result.push({
+                            lab_id: lab_id,
+                            title: jikkenDict.value[lab_id].title,
+                            place: jikkenDict.value[lab_id].place,
+                            teacher: jikkenDict.value[lab_id].teacher,
+                            week: week,
+                            time: timeOfDay
+                        })
+                    }
+                })
+        })
+    result.sort((a, b) => {
+        // increasing: week, sub-increasing: time
+        if (a.week === b.week) {
+            return a.time - b.time
+        } else {
+            return parseInt(a.week) - parseInt(b.week)
+        }
+    })
+    return result
 }
 
 export {
-    studentDict, jikkenDict, isStudentLoaded, isJikkenLoaded,
-    curStudentId, transformStudent, transformJikken
+    studentDict,
+    jikkenDict,
+    isStudentLoaded,
+    isJikkenLoaded,
+    curStudentId,
+    curStudent,
+    queryJikkenOfBatch,
+    transformStudent,
+    transformJikken
 }
