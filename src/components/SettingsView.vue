@@ -4,7 +4,7 @@
     <div class="flex flex-col space-y-4">
       <p class="ml-1 font-light text-2xl">欢迎</p>
       <hr>
-      <span v-if="curStudentId" class="text-base ml-1">✅ 输入完成，准许查询课程</span>
+      <span v-if="curStudentId" class="text-base ml-1">✅ 查询成功，准许查看排课</span>
       <span v-else class="text-base ml-1">ℹ️ 开始查询前，请先在下栏输入您的学号</span>
     </div>
   </div>
