@@ -16,8 +16,8 @@ const isStudentLoaded: Ref<boolean> = ref(false);
 // 实验安排字典，和时间表一起加载
 type JikkenDictType = { [lab_id: string]: JikkenData };
 const jikkenDict: ShallowRef<JikkenDictType> = shallowRef({});
-type TimeDictType = { [week: string]: { [time in TimeOfDay]: number[] } };
-const timeDict: ShallowRef<TimeDictType> = shallowRef({});
+type TimetableDictType = { [week: string]: { [time in TimeOfDay]: number[] } };
+const timetableDict: ShallowRef<TimetableDictType> = shallowRef({});
 const isJikkenLoaded: Ref<boolean> = ref(false);
 
 // 当前选中的学生的 ID，为 null 则说明未选中任何学生
@@ -46,7 +46,7 @@ function transJikkenData(raw: RawJikken) {
     const jk = raw.jikken;
     const tt = raw.timetable;
     const temp1: JikkenDictType = {};
-    const temp2: TimeDictType = {};
+    const temp2: TimetableDictType = {};
     for (const id in jk) {
         temp1[id] = {
             title: jk[id][0],
@@ -62,12 +62,12 @@ function transJikkenData(raw: RawJikken) {
         };
     }
     jikkenDict.value = temp1;
-    timeDict.value = temp2;
+    timetableDict.value = temp2;
 }
 
-function queryJikkenOfBatch(batch: number): JikkenTimetable {
+function queryTimetable(batch: number): JikkenTimetable {
     const result: JikkenTimetable = [];
-    Object.entries(timeDict.value).forEach(([week, schedules]) => {
+    Object.entries(timetableDict.value).forEach(([week, schedules]) => {
         Object.values(schedules).forEach((schedule, timeOfDay) => {
             const lab_id = schedule.indexOf(batch);
             if (lab_id != -1) {
@@ -77,7 +77,7 @@ function queryJikkenOfBatch(batch: number): JikkenTimetable {
                     place: jikkenDict.value[lab_id].place,
                     teacher: jikkenDict.value[lab_id].teacher,
                     week: week,
-                    time_of_day: timeOfDay
+                    period: timeOfDay
                 });
             }
         });
@@ -85,7 +85,7 @@ function queryJikkenOfBatch(batch: number): JikkenTimetable {
     result.sort((a, b) => {
         // increasing: week, sub-increasing: time
         if (a.week === b.week) {
-            return a.time_of_day - b.time_of_day;
+            return a.period - b.period;
         } else {
             return parseInt(a.week) - parseInt(b.week);
         }
@@ -96,11 +96,12 @@ function queryJikkenOfBatch(batch: number): JikkenTimetable {
 export {
     studentDict,
     jikkenDict,
+    timetableDict,
     isStudentLoaded,
     isJikkenLoaded,
     curStudentId,
     curStudent,
-    queryJikkenOfBatch,
+    queryTimetable,
     transStudentData,
     transJikkenData
 };

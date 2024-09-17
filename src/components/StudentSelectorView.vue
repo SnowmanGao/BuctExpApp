@@ -1,5 +1,5 @@
 <template>
-  <Combobox v-model="selected" nullable>
+  <Combobox ref="cbRef" v-model="selected" nullable>
     <div id="otto-box" class="relative z-10">
       <SnowTag v-model="colorClassMap">学号</SnowTag>
       <div
@@ -11,17 +11,14 @@
       >
         <ComboboxInput
           id="cb-input"
-          ref="input"
+          ref="inputRef"
           :displayValue="(person) => (person as IPersonOrNull)?.sid ?? ''"
           class="w-full py-2 pl-3 pr-10 text-base leading-5 text-gray-900"
           placeholder="请输入学号..."
           type="search"
-          @change="onInputChange($event)"
+          @change="onInputChange()"
           @focusin="hasFocus = true"
-          @focusout="
-            hasFocus = false;
-            onSelectedPerson();
-          "
+          @focusout="onInputBlur()"
           @keydown="onInputKeyDown($event)"
         />
         <ComboboxButton class="absolute inset-y-0 right-0 flex items-center pr-2">
@@ -89,7 +86,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, type ComputedRef, onMounted, type Ref, ref } from 'vue';
+import { computed, type ComputedRef, nextTick, onMounted, type Ref, ref } from 'vue';
 import {
   Combobox,
   ComboboxButton,
@@ -99,11 +96,11 @@ import {
   TransitionRoot
 } from '@headlessui/vue';
 import { CheckIcon, ChevronUpDownIcon, ExclamationCircleIcon } from '@heroicons/vue/20/solid';
-import type { RawStudent } from '@/core/MainModel';
-import { curStudentId, isStudentLoaded, studentDict, transStudentData } from '@/core/MainSystem';
+import { curStudentId, studentDict } from '@/core/MainSystem';
 import { arrayTake, debounce, scrollToBottom, scrollToTop } from '@/core/Utils';
 import { StorageSystem } from '@/core/StorageSystem';
 import SnowTag from '@/components/SnowTag.vue';
+import { waitForStudentDataAsync } from '@/core/FetchSystem';
 
 interface IPerson {
   sid: string;
@@ -113,45 +110,30 @@ interface IPerson {
 type IPersonOrNull = IPerson | null;
 
 // Vue Event
-onMounted(() => {
-  if (isStudentLoaded.value) return;
-  fetch('/resources/student_map.json')
-    .then((response) => response.json())
-    .then((data: RawStudent) => transStudentData(data))
-    .then(() => (isStudentLoaded.value = true))
-    .then(onLoadedMap);
+onMounted(async () => {
+  await waitForStudentDataAsync();
+  curStudentId.value = StorageSystem.loadSid();
+  const sid = curStudentId.value;
+  if (sid === null) return;
+  getInputElement().value = sid;
+  query.value = sid;
 });
 
-// Vue Event
-onMounted(() => {
-  const curStuId = curStudentId.value;
-  if (curStuId === null) return;
-  selected.value = {
-    sid: curStuId,
-    class: studentDict.value[curStuId].class
-  };
-});
-
-// My Event: Option.OnClick & Input.OnPress(Enter)
+// My Event: Option.OnClick & Input.OnPress(Enter) & Input.OnFocusOut
 const onSelectedPerson = debounce(() => {
-  input.value.$el.blur();
+  const input = getInputElement();
+  input.blur();
   scrollToTop();
-  if (input.value.$el.value === '') curStudentId.value = null;
-  else curStudentId.value = selected.value?.sid ?? null;
+  curStudentId.value = selected.value?.sid ?? null;
   StorageSystem.saveSid(curStudentId.value);
 }, 500);
 
-// My Event : After Fetched
-function onLoadedMap() {
-  curStudentId.value = StorageSystem.loadSid();
-  input.value.$el.value = curStudentId.value;
-  query.value = curStudentId.value ?? '';
-}
-
 // My Event : Input.OnChange
-function onInputChange(e: Event) {
-  query.value = (e.target as HTMLInputElement).value;
-  scrollToBottom();
+function onInputChange() {
+  const input = getInputElement();
+  query.value = input.value;
+  if (input.value == '') closeCombobox();
+  else scrollToBottom();
 }
 
 // My Event : Input.OnKeyDown
@@ -159,37 +141,62 @@ function onInputKeyDown(e: KeyboardEvent) {
   if (e.key == 'Enter') onSelectedPerson();
 }
 
+// My Event : Input.OnFocusOut
+function onInputBlur() {
+  hasFocus.value = false;
+  if (filteredPeople.value.length == 1) {
+    selected.value = filteredPeople.value[0];
+  }
+  onSelectedPerson();
+}
+
+// Hacking Method for HeadlessUI
+function closeCombobox() {
+  const pr = cbRef.value.$.provides;
+  nextTick(() => pr[Object.getOwnPropertySymbols(pr)[0]].closeCombobox());
+}
+
+
+
 // 当前选中的人，用 IPerson 表示
 const selected: Ref<IPersonOrNull> = ref(null);
 // 用户实际输入的内容（单向绑定输入框内容）
 const query = ref('');
-// 输入框 HTMLElement
-const input = ref();
+// 输入框的 HTMLElement Ref
+const inputRef = ref();
+// Combobox 的 HTMLElement Ref
+const cbRef = ref();
+
+// 简写，获取输入框的 HTMLElement 对象
+function getInputElement(): HTMLInputElement {
+  return inputRef.value.$el;
+}
+
 // 焦点是否在输入框，用于控制输入框 border 颜色
 const hasFocus = ref(false);
-
 // 是否查无此人，用于控制输入框 border 颜色和选项背景颜色
 const hasNotFound = computed(() => hasFocus.value && filteredPeople.value.length == 0);
 // 获取颜色映射
 const colorClassMap = computed(() => {
   if (hasFocus.value) {
-    if (filteredPeople.value.length == 0) return 'border-red-600';
+    if (filteredPeople.value.length == 0 && query.value.length != 0) {
+      return 'border-red-600';
+    }
     return 'border-teal-600';
   }
   return 'border-grey-600';
 });
 
+// 将所有学生数据转化为便于展示的形态
 const people: ComputedRef<IPerson[]> = computed(() => {
   return Object.entries(studentDict.value).map(([sid, data]) => ({
     sid: sid,
     class: data.class
   }));
 });
-
+// 获取当前所有的可选项
 const filteredPeople = computed(() =>
-  query.value == ''
-    ? people.value.slice(0, 5)
-    : arrayTake(people.value, (p) => p.sid.includes(query.value.trim()), 5)
+  query.value == '' ? [] : arrayTake(people.value, (p) => p.sid.includes(query.value.trim()), 5)
 );
 </script>
 

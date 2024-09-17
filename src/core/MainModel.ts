@@ -33,7 +33,7 @@ export type JikkenTimeTableItem = {
     place: string;
     teacher: string;
     week: string;
-    time_of_day: TimeOfDay;
+    period: TimeOfDay;
 };
 
 export type JikkenTimetable = JikkenTimeTableItem[];

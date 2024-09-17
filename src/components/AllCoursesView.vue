@@ -1,9 +1,9 @@
 <template>
-  <div class="snow-card rounded-xl bg-white p-3 ring-white/60 ring-offset-2 ring-offset-blue-400">
+  <div class="snow-card">
     <ul v-if="timeTable.length" class="space-y-2">
       <li
         v-for="(item, index) in timeTable"
-        :key="`${item.week}_${item.time_of_day}_${item.lab_id}`"
+        :key="`${item.week}_${item.period}_${item.lab_id}`"
         class="flex items-center relative rounded-md p-3 hover:bg-gray-100"
       >
         <span class="snow-block size-10 mr-4 text-blue-500">{{ index + 1 }}</span>
@@ -23,33 +23,22 @@
         />
       </li>
     </ul>
-    <div v-else class="text-center text-gray-500 text-2xl font-light">[无课程]</div>
+    <div v-else class="text-center text-gray-700 text-2xl font-light">哇襖！无课程</div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { curStudent, isJikkenLoaded, queryJikkenOfBatch, transJikkenData } from '@/core/MainSystem';
-import { onMounted, type Ref, ref } from 'vue';
-import type { JikkenTimetable, RawJikken } from '@/core/MainModel';
-
-// Vue Event
-onMounted(() => {
-  if (isJikkenLoaded.value) {
-    query();
-    return;
-  }
-  fetch('/resources/jikken_map.json')
-    .then((response) => response.json())
-    .then((data: RawJikken) => transJikkenData(data))
-    .then(() => (isJikkenLoaded.value = true))
-    .then(query);
-});
+import { curStudent, queryTimetable } from '@/core/MainSystem';
+import { type Ref, ref } from 'vue';
+import type { JikkenTimetable } from '@/core/MainModel';
+import { waitForJikkenDataAsync } from '@/core/FetchSystem';
 
 const timeTable: Ref<JikkenTimetable> = ref([]);
-const query = () => {
-  if (curStudent.value === null) return;
-  timeTable.value = queryJikkenOfBatch(curStudent.value?.batch);
-};
+
+await waitForJikkenDataAsync();
+if (curStudent.value !== null) {
+  timeTable.value = queryTimetable(curStudent.value?.batch);
+}
 </script>
 
 <style scoped>

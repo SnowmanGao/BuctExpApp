@@ -23,11 +23,25 @@
         </TabPanel>
 
         <TabPanel>
-          <CurCourseView />
+          <Suspense>
+            <CurCourseView />
+            <template v-slot:fallback>
+              <div class="snow-card">
+                <div class="text-center text-gray-700 text-2xl font-light">Loading...</div>
+              </div>
+            </template>
+          </Suspense>
         </TabPanel>
 
         <TabPanel>
-          <AllCoursesView />
+          <Suspense>
+            <AllCoursesView />
+            <template v-slot:fallback>
+              <div class="snow-card">
+                <div class="text-center text-gray-700 text-2xl font-light">Loading...</div>
+              </div>
+            </template>
+          </Suspense>
         </TabPanel>
       </TabPanels>
     </TabGroup>
