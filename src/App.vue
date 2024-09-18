@@ -22,9 +22,9 @@
           <SettingsView />
         </TabPanel>
 
-        <TabPanel>
+        <TabPanel class="space-y-4">
           <Suspense>
-            <CurCourseView />
+            <CurCoursesView />
             <template v-slot:fallback>
               <div class="snow-card">
                 <div class="text-center text-gray-700 text-2xl font-light">Loading...</div>
@@ -33,7 +33,7 @@
           </Suspense>
         </TabPanel>
 
-        <TabPanel>
+        <TabPanel class="space-y-4">
           <Suspense>
             <AllCoursesView />
             <template v-slot:fallback>
@@ -52,7 +52,7 @@
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/vue';
 import SettingsView from '@/components/SettingsView.vue';
 import AllCoursesView from '@/components/AllCoursesView.vue';
-import CurCourseView from '@/components/CurCoursesView.vue';
+import CurCoursesView from '@/components/CurCoursesView.vue';
 
 const titles = ['置设', '近期排课', '全部排课'];
 </script>

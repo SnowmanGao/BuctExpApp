@@ -6,7 +6,7 @@
         :key="`${item.week}_${item.period}_${item.lab_id}`"
         class="flex items-center relative rounded-md p-3 hover:bg-gray-100"
       >
-        <span class="snow-block size-10 mr-4 text-blue-500">{{ index + 1 }}</span>
+        <span class="snow-big-num text-blue-500">{{ index + 1 }}</span>
         <div>
           <h3 class="text-base font-medium leading-5">{{ item.title }}</h3>
           <ul class="mt-1 flex space-x-1 text-xs font-normal leading-4 text-gray-500">
@@ -18,7 +18,7 @@
           </ul>
         </div>
         <a
-          class="absolute inset-0 rounded-md ring-blue-400 focus:z-10 focus:outline-none focus:ring-2"
+          class="snow-jikken-border ring-blue-400"
           href="javascript:void(0);"
         />
       </li>
@@ -37,20 +37,6 @@ const timeTable: Ref<JikkenTimetable> = ref([]);
 
 await waitForJikkenDataAsync();
 if (curStudent.value !== null) {
-  timeTable.value = queryTimetable(curStudent.value?.batch);
+  timeTable.value = queryTimetable(curStudent.value.batch);
 }
 </script>
-
-<style scoped>
-.snow-block {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  /* font */
-  font-size: 2rem;
-  line-height: 2rem;
-  font-family: fantasy;
-  font-style: italic;
-  transform: translateX(-4px);
-}
-</style>

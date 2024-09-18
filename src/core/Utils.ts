@@ -23,6 +23,22 @@ function debounce<T extends (...args: any[]) => void>(
     };
 }
 
+class SnowPipe<T> {
+    private readonly data: T;
+
+    constructor(data: T) {
+        this.data = data;
+    }
+
+    forward<U>(processor: (value: T) => U): SnowPipe<U> {
+        return new SnowPipe<U>(processor(this.data));
+    }
+
+    result(): T {
+        return this.data;
+    }
+}
+
 function scrollToTop() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -34,4 +50,4 @@ function scrollToBottom() {
     });
 }
 
-export { arrayTake, debounce, scrollToTop, scrollToBottom };
+export { arrayTake, debounce, scrollToTop, scrollToBottom, SnowPipe };

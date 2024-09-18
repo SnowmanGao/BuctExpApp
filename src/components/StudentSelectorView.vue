@@ -86,16 +86,7 @@
 </template>
 
 <script lang="ts" setup>
-import {
-  type ComponentInternalInstance,
-  computed,
-  type ComputedRef,
-  nextTick,
-  onMounted,
-  type Ref,
-  ref,
-  watchEffect
-} from 'vue';
+import { computed, type ComputedRef, onMounted, type Ref, ref } from 'vue';
 import {
   Combobox,
   ComboboxButton,
