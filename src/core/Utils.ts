@@ -9,6 +9,7 @@ function arrayTake<T>(array: T[], predicate: (item: T) => boolean, n: number) {
     return result;
 }
 
+// 特制防抖，先执行后有不应期
 function debounce<T extends (...args: any[]) => void>(
     fn: T,
     wait: number

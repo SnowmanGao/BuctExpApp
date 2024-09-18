@@ -1,6 +1,6 @@
 <template>
   <Combobox ref="cbRef" v-model="selected" nullable>
-    <div id="otto-box" class="relative z-10">
+    <div class="relative z-10 mb-2">
       <SnowTag v-model="colorClassMap">学号</SnowTag>
       <div
         id="cb-input-box"
@@ -31,7 +31,7 @@
         leaveTo="opacity-0"
       >
         <ComboboxOptions
-          :class="hasNotFound ? 'bg-red-50' : 'bg-green-50'"
+          :class="hasNotFound && hasFocus ? 'bg-red-50' : 'bg-green-50'"
           class="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-green-50 py-1 text-base ring-1 ring-black/5 focus:outline-none"
         >
           <div
@@ -86,7 +86,16 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, type ComputedRef, nextTick, onMounted, type Ref, ref } from 'vue';
+import {
+  type ComponentInternalInstance,
+  computed,
+  type ComputedRef,
+  nextTick,
+  onMounted,
+  type Ref,
+  ref,
+  watchEffect
+} from 'vue';
 import {
   Combobox,
   ComboboxButton,
@@ -111,28 +120,42 @@ type IPersonOrNull = IPerson | null;
 
 // Vue Event
 onMounted(async () => {
+  // 为 InputElement 的简写赋值
+  inputElement = inputRef.value.$el;
+  // 网络请求 StudentData
   await waitForStudentDataAsync();
+  // 尝试从 localStorage 加载学号
   curStudentId.value = StorageSystem.loadSid();
   const sid = curStudentId.value;
-  if (sid === null) return;
-  getInputElement().value = sid;
-  query.value = sid;
+  if (sid !== null) {
+    inputElement.value = sid;
+    query.value = sid;
+  }
+  // 挂载 HeadlessUI Hacking
+  ComboboxHack.init();
+  ComboboxHack.beforeOpen(() => {
+    return inputElement.value != '' || filteredPeople.value.length != 0;
+  });
 });
 
 // My Event: Option.OnClick & Input.OnPress(Enter) & Input.OnFocusOut
 const onSelectedPerson = debounce(() => {
-  const input = getInputElement();
-  input.blur();
+  inputElement.blur();
   scrollToTop();
-  curStudentId.value = selected.value?.sid ?? null;
+  curStudentId.value = selected.value!.sid ?? null;
   StorageSystem.saveSid(curStudentId.value);
 }, 500);
 
+function clearCurStudent() {
+  ComboboxHack.close();
+  curStudentId.value = null;
+}
+
 // My Event : Input.OnChange
 function onInputChange() {
-  const input = getInputElement();
+  const input = inputElement;
   query.value = input.value;
-  if (input.value == '') closeCombobox();
+  if (input.value == '') clearCurStudent();
   else scrollToBottom();
 }
 
@@ -143,20 +166,13 @@ function onInputKeyDown(e: KeyboardEvent) {
 
 // My Event : Input.OnFocusOut
 function onInputBlur() {
-  hasFocus.value = false;
   if (filteredPeople.value.length == 1) {
     selected.value = filteredPeople.value[0];
+    onSelectedPerson();
   }
-  onSelectedPerson();
+  if (ComboboxHack.isOpen()) hasFocus.value = false;
+  if (inputElement.value == '') clearCurStudent();
 }
-
-// Hacking Method for HeadlessUI
-function closeCombobox() {
-  const pr = cbRef.value.$.provides;
-  nextTick(() => pr[Object.getOwnPropertySymbols(pr)[0]].closeCombobox());
-}
-
-
 
 // 当前选中的人，用 IPerson 表示
 const selected: Ref<IPersonOrNull> = ref(null);
@@ -168,14 +184,41 @@ const inputRef = ref();
 const cbRef = ref();
 
 // 简写，获取输入框的 HTMLElement 对象
-function getInputElement(): HTMLInputElement {
-  return inputRef.value.$el;
+let inputElement: HTMLInputElement;
+
+// Hacking class for HeadlessUI
+class ComboboxHack {
+  static cb$: any;
+  static provides: any;
+  static stateRef: Ref<number>;
+
+  static init() {
+    this.cb$ = cbRef.value.$;
+    this.provides = this.cb$.provides[Object.getOwnPropertySymbols(this.cb$.provides)[0]];
+    this.stateRef = this.provides.comboboxState;
+  }
+
+  static close() {
+    this.provides.closeCombobox();
+  }
+
+  static beforeOpen(fn: () => boolean) {
+    const before = this.provides.openCombobox;
+    this.provides.openCombobox = () => {
+      if (!fn()) return;
+      before();
+    };
+  }
+
+  static isOpen(): boolean {
+    return this.stateRef.value == 1;
+  }
 }
 
-// 焦点是否在输入框，用于控制输入框 border 颜色
+// 焦点是否在输入框（单向绑定输入框焦点）
 const hasFocus = ref(false);
 // 是否查无此人，用于控制输入框 border 颜色和选项背景颜色
-const hasNotFound = computed(() => hasFocus.value && filteredPeople.value.length == 0);
+const hasNotFound = computed(() => filteredPeople.value.length == 0);
 // 获取颜色映射
 const colorClassMap = computed(() => {
   if (hasFocus.value) {
@@ -194,10 +237,12 @@ const people: ComputedRef<IPerson[]> = computed(() => {
     class: data.class
   }));
 });
+
 // 获取当前所有的可选项
-const filteredPeople = computed(() =>
-  query.value == '' ? [] : arrayTake(people.value, (p) => p.sid.includes(query.value.trim()), 5)
-);
+const filteredPeople = computed(() => {
+  if (query.value == '') return [];
+  return arrayTake(people.value, (p) => p.sid.includes(query.value.trim()), 5);
+});
 </script>
 
 <style scoped>
@@ -208,9 +253,5 @@ const filteredPeople = computed(() =>
 #cb-input-box {
   border-top-left-radius: 0;
   transition: border-color ease-in 0.1s;
-}
-
-#otto-box {
-  margin-bottom: 0.5rem;
 }
 </style>
