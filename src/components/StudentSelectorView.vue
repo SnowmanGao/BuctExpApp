@@ -131,6 +131,7 @@ onMounted(async () => {
 
 // My Event: Option.OnClick & Input.OnPress(Enter) & Input.OnFocusOut
 const onSelectedPerson = debounce(() => {
+  // 必须保证 selected 不为空！
   inputElement.blur();
   scrollToTop();
   curStudentId.value = selected.value!.sid ?? null;
@@ -140,6 +141,8 @@ const onSelectedPerson = debounce(() => {
 function clearCurStudent() {
   ComboboxHack.close();
   curStudentId.value = null;
+  selected.value = null;
+  StorageSystem.saveSid(null);
 }
 
 // My Event : Input.OnChange

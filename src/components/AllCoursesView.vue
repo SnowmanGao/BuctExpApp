@@ -3,7 +3,7 @@
     <ul v-if="timeTable.length" class="space-y-2">
       <li
         v-for="(item, index) in timeTable"
-        :key="`${item.week}_${item.period}_${item.lab_id}`"
+        :key="`${item.week}_${item.period}_${item.serial}`"
         class="flex items-center relative rounded-md p-3 hover:bg-gray-100"
       >
         <span class="snow-big-num text-blue-500">{{ index + 1 }}</span>

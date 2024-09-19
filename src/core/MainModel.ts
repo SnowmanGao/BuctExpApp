@@ -26,22 +26,15 @@ export enum TimeOfDay {
     Evening = 2
 }
 
-export type JikkenTimeTableItem = {
-    // 实验室编号
-    lab_id: number;
+export type JikkenTimetableItem = {
+    // 表示是第几次实验
+    serial: number
     title: string;
     place: string;
     teacher: string;
-    week: string;
+    week: number;
     period: TimeOfDay;
-};
-
-export type JikkenTimetable = JikkenTimeTableItem[];
-
-export type JikkenScheduleItem = {
     start: Date;
-    end: Date;
-    jikken: JikkenTimeTableItem;
 };
 
-export type JikkenSchedule = JikkenScheduleItem[];
+export type JikkenTimetable = JikkenTimetableItem[];

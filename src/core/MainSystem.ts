@@ -7,6 +7,7 @@ import type {
 } from '@/core/MainModel.js';
 import { TimeOfDay } from '@/core/MainModel.js';
 import { computed, type Ref, ref, type ShallowRef, shallowRef } from 'vue';
+import { BuctSchedule } from '@/core/ScheduleSystem';
 
 // 学生字典
 type StudentDictType = { [stu_id: string]: StudentData };
@@ -69,27 +70,24 @@ function queryTimetable(batch: number): JikkenTimetable {
     const result: JikkenTimetable = [];
     Object.entries(timetableDict.value).forEach(([week, schedules]) => {
         Object.values(schedules).forEach((schedule, timeOfDay) => {
-            const lab_id = schedule.indexOf(batch);
-            if (lab_id != -1) {
+            const labId = schedule.indexOf(batch);
+            const getStart = BuctSchedule.getDateFromWeekAndPeriod;
+            if (labId != -1) {
                 result.push({
-                    lab_id: lab_id,
-                    title: jikkenDict.value[lab_id].title,
-                    place: jikkenDict.value[lab_id].place,
-                    teacher: jikkenDict.value[lab_id].teacher,
-                    week: week,
-                    period: timeOfDay
+                    serial: -1, // unset
+                    title: jikkenDict.value[labId].title,
+                    place: jikkenDict.value[labId].place,
+                    teacher: jikkenDict.value[labId].teacher,
+                    week: parseInt(week),
+                    period: timeOfDay,
+                    start: getStart(parseInt(week), timeOfDay)
                 });
             }
         });
     });
-    result.sort((a, b) => {
-        // increasing: week, sub-increasing: time
-        if (a.week === b.week) {
-            return a.period - b.period;
-        } else {
-            return parseInt(a.week) - parseInt(b.week);
-        }
-    });
+    result
+        .sort((a, b) => a.start.getTime() - b.start.getTime())
+        .forEach((item, idx) => (item.serial = idx + 1));
     return result;
 }
 

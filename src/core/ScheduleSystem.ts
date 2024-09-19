@@ -1,9 +1,4 @@
-import {
-    type JikkenSchedule,
-    type JikkenTimetable,
-    type JikkenTimeTableItem,
-    TimeOfDay
-} from '@/core/MainModel';
+import { type JikkenTimetable, type JikkenTimetableItem, TimeOfDay } from '@/core/MainModel';
 
 class ScheduleSystem {
     static current(): Date {
@@ -12,7 +7,9 @@ class ScheduleSystem {
 
     // 根据学期内周数计算那周的开始日期
     static weekNumberToDate(start: Date, week: number): Date {
-        return ScheduleSystem.getDateAfterDays(start, week * 7);
+        if (week <= 0) throw new Error('Invalid week number, must be positive');
+        if (!Number.isInteger(week)) throw new Error('Invalid week number, must be integer');
+        return ScheduleSystem.getDateAfterDays(start, (week - 1) * 7);
     }
 
     static dateToWeekNumber(start: Date, date: Date): number {
@@ -44,10 +41,12 @@ class BuctSchedule {
     static CONFIG = {
         // 表示本学期第一周的开始日期
         week_start: new Date('2024/8/26'),
-        // 表示实验在星期几
+        // 表示实验在星期几（周日为 0）
         jikken_day_of_week: 6,
         // 上午、下午、晚上到具体时间的映射（24小时制）
-        time_of_day: [9.0, 13.5, 17.5]
+        time_of_day: [9.0, 13.5, 17.5],
+        // 实验持续时间（小时）
+        jikken_duration: 2
     };
 
     static getCurWeekNumber(): number {
@@ -57,33 +56,32 @@ class BuctSchedule {
         );
     }
 
-    static getNextJikken(schedule: JikkenSchedule): JikkenTimeTableItem | null {
+    static getNextJikken(schedule: JikkenTimetable): JikkenTimetableItem | null {
         const current = ScheduleSystem.current();
         schedule.sort((a, b) => a.start.getTime() - b.start.getTime());
         for (const item of schedule) {
-            if (current < item.start) return item.jikken;
+            if (current < item.start) return item;
         }
         return null;
     }
 
-    static transToSchedule(table: JikkenTimetable): JikkenSchedule {
-        function buildMyTime(period: TimeOfDay, week: number) {
-            const offset = (day: number) => (day == 0 ? 6 : day - 1);
-            const ss = ScheduleSystem;
-            const bs = BuctSchedule;
-            const start = ss.getDateAfterDays(
-                ss.weekNumberToDate(bs.CONFIG.week_start, week),
-                offset(bs.CONFIG.jikken_day_of_week)
-            );
-            start.setHours(bs.CONFIG.time_of_day[period]);
-            const end = ss.getDateAfterHours(start, 2);
-            return { start, end };
-        }
+    static getDateFromWeekAndPeriod(week: number, period: TimeOfDay): Date {
+        const offset = (day: number) => (day == 0 ? 6 : day - 1);
+        const config = BuctSchedule.CONFIG;
+        const result = ScheduleSystem.getDateAfterDays(
+            ScheduleSystem.weekNumberToDate(config.week_start, week),
+            offset(config.jikken_day_of_week)
+        );
+        result.setHours(config.time_of_day[period]);
+        return result;
+    }
 
-        return table.map((item) => ({
-            jikken: item,
-            ...buildMyTime(item.period, parseInt(item.week))
-        }));
+    static getJikkenStartAndEnd(jikken: JikkenTimetableItem) {
+        // 可能废弃
+        const config = BuctSchedule.CONFIG;
+        const start = BuctSchedule.getDateFromWeekAndPeriod(jikken.week, jikken.period);
+        const end = ScheduleSystem.getDateAfterHours(start, config.jikken_duration);
+        return { start, end };
     }
 }
 
