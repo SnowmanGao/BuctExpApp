@@ -1,6 +1,6 @@
 <template>
-  <div class="snow-card">
-    <ul v-if="timeTable.length" class="space-y-2">
+  <div v-if="timeTable.length" class="snow-card">
+    <ul class="space-y-2">
       <li
         v-for="(item, index) in timeTable"
         :key="`${item.week}_${item.period}_${item.serial}`"
@@ -17,14 +17,14 @@
             <li>{{ item.teacher }}</li>
           </ul>
         </div>
-        <a
-          class="snow-jikken-border ring-blue-400"
-          href="javascript:void(0);"
-        />
+        <a class="snow-jikken-border ring-blue-400" href="javascript:void(0);" />
       </li>
     </ul>
-    <div v-else class="text-center text-gray-700 text-2xl font-light">哇襖！无课程</div>
   </div>
+  <DummyView v-else>
+    <template v-slot:title>哇襖！无课程</template>
+    <template v-slot:content>请先在设置页面设置您的学号。</template>
+  </DummyView>
 </template>
 
 <script lang="ts" setup>
@@ -32,6 +32,7 @@ import { curStudent, queryTimetable } from '@/core/MainSystem';
 import { type Ref, ref } from 'vue';
 import type { JikkenTimetable } from '@/core/MainModel';
 import { waitForJikkenDataAsync } from '@/core/FetchSystem';
+import DummyView from '@/components/DummyView.vue';
 
 const timeTable: Ref<JikkenTimetable> = ref([]);
 
