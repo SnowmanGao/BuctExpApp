@@ -3,10 +3,9 @@
     <SemesterView />
   </div>
   <suspense>
-    <div v-if="nextJikken" class="snow-card hover:outline-none hover:ring-2">
-      <div class="flex flex-col space-y-4">
-        <p class="ml-1 font-light text-2xl">近期实验</p>
-        <hr />
+    <CardView v-if="nextJikken">
+      <template v-slot:title>近期实验</template>
+      <template v-slot:content>
         <span class="text-base ml-1">{{ getDetailTimeString(nextJikken) }} 要做的实验：</span>
         <div class="snow-stripe flex items-center relative rounded-md p-3">
           <span class="snow-big-num text-blue-500">{{ nextJikken.serial }}</span>
@@ -23,13 +22,13 @@
           </div>
         </div>
         <span class="text-base ml-1">距离实验还有 {{ deltaTimeStr }}</span>
-      </div>
-    </div>
-    <CardView v-else>
+      </template>
+    </CardView>
+    <CardView v-else-if="curStudent === null">
       <template v-slot:title>近期排课？</template>
       <template v-slot:content>请先在设置页面设置您的学号。</template>
     </CardView>
-    <template v-slot:fallback>
+    <template v-else >
       <div class="snow-card">
         <div class="text-center text-gray-700 text-2xl font-light">Loading...</div>
       </div>
