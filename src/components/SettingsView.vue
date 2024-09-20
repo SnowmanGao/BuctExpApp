@@ -1,29 +1,33 @@
 <template>
-  <div class="snow-card hover:outline-none hover:ring-2">
-    <div class="flex flex-col space-y-4">
-      <p class="ml-1 font-light text-2xl">欢迎</p>
-      <hr />
-      <span v-if="curStudentId" class="text-base ml-1">✅ 查询成功，准许查看排课</span>
-      <span v-else class="text-base ml-1">ℹ️ 开始查询前，请先在下栏输入您的学号</span>
-    </div>
-  </div>
+  <CardView>
+    <template v-slot:title>欢迎</template>
+    <template v-slot:content>
+      <span>🆚 版本：v{{ VERSION }} ({{ BUILD_TIME }})</span>
+      <span v-if="curStudentId">✅ 查询成功，准许查看排课</span>
+      <span v-else>ℹ️ 开始查询前，请先在下栏输入您的学号</span>
+    </template>
+  </CardView>
 
-  <div class="snow-card hover:outline-none hover:ring-2">
-    <div class="flex flex-col space-y-4">
-      <p class="ml-1 font-light text-2xl">个人信息</p>
-      <hr class="h-3" />
+  <CardView>
+    <template v-slot:title>个人信息</template>
+    <template v-slot:content>
+      <div style="margin-bottom: -0.15rem" />
       <StudentSelectorView />
       <transition>
         <StudentInfoView />
       </transition>
-    </div>
-  </div>
+    </template>
+  </CardView>
 </template>
 
 <script lang="ts" setup>
 import StudentSelectorView from '@/components/StudentSelectorView.vue';
 import StudentInfoView from '@/components/StudentInfoView.vue';
 import { curStudentId } from '@/core/MainSystem';
+import CardView from '@/components/CardView.vue';
+
+const VERSION = '0.4.4';
+const BUILD_TIME = '2024-09-20';
 </script>
 
 <style>

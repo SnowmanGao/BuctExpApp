@@ -2,32 +2,39 @@
   <div class="snow-card hover:outline-none hover:ring-2">
     <SemesterView />
   </div>
-  <div v-if="nextJikken" class="snow-card hover:outline-none hover:ring-2">
-    <div class="flex flex-col space-y-4">
-      <p class="ml-1 font-light text-2xl">近期实验</p>
-      <hr />
-      <span class="text-base ml-1">{{ getDetailTimeString(nextJikken) }} 要做的实验：</span>
-      <div class="snow-stripe flex items-center relative rounded-md p-3">
-        <span class="snow-big-num text-blue-500">{{ nextJikken.serial }}</span>
-        <div>
-          <h3 class="text-base font-medium leading-5">{{ nextJikken.title }}</h3>
-          <ul class="mt-1 flex space-x-1 text-xs font-normal leading-4 text-gray-500">
-            <li>{{ getDateTimeString(nextJikken) }}</li>
-            <li>&middot;</li>
-            <li>{{ nextJikken.place }}</li>
-            <li>&middot;</li>
-            <li>{{ nextJikken.teacher }}</li>
-          </ul>
-          <a class="snow-jikken-border ring-blue-400" href="javascript:void(0);" />
+  <suspense>
+    <div v-if="nextJikken" class="snow-card hover:outline-none hover:ring-2">
+      <div class="flex flex-col space-y-4">
+        <p class="ml-1 font-light text-2xl">近期实验</p>
+        <hr />
+        <span class="text-base ml-1">{{ getDetailTimeString(nextJikken) }} 要做的实验：</span>
+        <div class="snow-stripe flex items-center relative rounded-md p-3">
+          <span class="snow-big-num text-blue-500">{{ nextJikken.serial }}</span>
+          <div>
+            <h3 class="text-base font-medium leading-5">{{ nextJikken.title }}</h3>
+            <ul class="mt-1 flex space-x-1 text-xs font-normal leading-4 text-gray-500">
+              <li>{{ getDateTimeString(nextJikken) }}</li>
+              <li>&middot;</li>
+              <li>{{ nextJikken.place }}</li>
+              <li>&middot;</li>
+              <li>{{ nextJikken.teacher }}</li>
+            </ul>
+            <a class="snow-jikken-border ring-blue-400" href="javascript:void(0);" />
+          </div>
         </div>
+        <span class="text-base ml-1">距离实验还有 {{ deltaTimeStr }}</span>
       </div>
-      <span class="text-base ml-1">距离实验还有 {{ deltaTimeStr }}</span>
     </div>
-  </div>
-  <DummyView v-else>
-    <template v-slot:title>近期排课？</template>
-    <template v-slot:content>请先在设置页面设置您的学号。</template>
-  </DummyView>
+    <CardView v-else>
+      <template v-slot:title>近期排课？</template>
+      <template v-slot:content>请先在设置页面设置您的学号。</template>
+    </CardView>
+    <template v-slot:fallback>
+      <div class="snow-card">
+        <div class="text-center text-gray-700 text-2xl font-light">Loading...</div>
+      </div>
+    </template>
+  </suspense>
 </template>
 
 <script lang="ts" setup>
@@ -37,7 +44,7 @@ import { curStudent, queryTimetable } from '@/core/MainSystem';
 import { onBeforeMount, onUnmounted, ref, type Ref } from 'vue';
 import SemesterView from '@/components/SemesterView.vue';
 import { type JikkenTimetable, type JikkenTimetableItem, TimeOfDay } from '@/core/MainModel';
-import DummyView from '@/components/DummyView.vue';
+import CardView from '@/components/CardView.vue';
 
 let nextJikken: Ref<JikkenTimetableItem | null> = ref(null);
 let timetable: Ref<JikkenTimetable | null> = ref(null);

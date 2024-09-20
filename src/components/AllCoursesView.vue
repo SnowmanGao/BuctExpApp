@@ -21,10 +21,10 @@
       </li>
     </ul>
   </div>
-  <DummyView v-else>
+  <CardView v-else>
     <template v-slot:title>哇襖！无课程</template>
     <template v-slot:content>请先在设置页面设置您的学号。</template>
-  </DummyView>
+  </CardView>
 </template>
 
 <script lang="ts" setup>
@@ -32,7 +32,7 @@ import { curStudent, queryTimetable } from '@/core/MainSystem';
 import { type Ref, ref } from 'vue';
 import type { JikkenTimetable } from '@/core/MainModel';
 import { waitForJikkenDataAsync } from '@/core/FetchSystem';
-import DummyView from '@/components/DummyView.vue';
+import CardView from '@/components/CardView.vue';
 
 const timeTable: Ref<JikkenTimetable> = ref([]);
 

@@ -25,12 +25,14 @@ class ScheduleSystem {
     }
 
     static getDateAfterHours(date: Date, hours: number): Date {
+        if (!Number.isInteger(hours)) throw new Error('Invalid hours, must be integer');
         const newDate = new Date(date);
         newDate.setHours(date.getHours() + hours);
         return newDate;
     }
 
     static getDateAfterMinutes(date: Date, minutes: number): Date {
+        if (!Number.isInteger(minutes)) throw new Error('Invalid minutes, must be integer');
         const newDate = new Date(date);
         newDate.setMinutes(date.getMinutes() + minutes);
         return newDate;
@@ -50,8 +52,8 @@ class BuctSchedule {
         jikken_day_of_week: 6,
         // 上午、下午、晚上到具体时间的映射（24小时制）
         time_of_day: [9.0, 13.5, 17.5],
-        // 实验持续时间（分钟）
-        jikken_duration: 210
+        // 实验持续时间（小时）
+        jikken_duration: 3.0
     };
 
     static getCurWeekNumber(): number {
@@ -77,14 +79,14 @@ class BuctSchedule {
             ScheduleSystem.weekNumberToDate(config.week_start, week),
             offset(config.jikken_day_of_week)
         );
-        result.setHours(config.time_of_day[period]);
+        result.setMinutes(60 * config.time_of_day[period]);
         return result;
     }
 
     static getJikkenStartAndEnd(jikken: JikkenTimetableItem) {
         const config = BuctSchedule.CONFIG;
         const start = BuctSchedule.getDateFromWeekAndPeriod(jikken.week, jikken.period);
-        const end = ScheduleSystem.getDateAfterMinutes(start, config.jikken_duration);
+        const end = ScheduleSystem.getDateAfterMinutes(start, 60 * config.jikken_duration);
         return { start, end };
     }
 }

@@ -23,14 +23,7 @@
         </TabPanel>
 
         <TabPanel class="space-y-4">
-          <Suspense>
-            <CurCoursesView />
-            <template v-slot:fallback>
-              <div class="snow-card">
-                <div class="text-center text-gray-700 text-2xl font-light">Loading...</div>
-              </div>
-            </template>
-          </Suspense>
+          <CurCoursesView />
         </TabPanel>
 
         <TabPanel class="space-y-4">
