@@ -21,7 +21,7 @@
           <a class="snow-jikken-border ring-blue-400" href="javascript:void(0);" />
         </div>
       </div>
-      <span class="text-base ml-1">距离实验还有 {{ deltaHours!.toFixed(6) }} h</span>
+      <span class="text-base ml-1">距离实验还有 {{ deltaTimeStr }}</span>
     </div>
   </div>
   <DummyView v-else>
@@ -36,12 +36,13 @@ import { BuctSchedule } from '@/core/ScheduleSystem';
 import { curStudent, queryTimetable } from '@/core/MainSystem';
 import { onBeforeMount, ref, type Ref } from 'vue';
 import SemesterView from '@/components/SemesterView.vue';
-import type { JikkenTimetable, JikkenTimetableItem } from '@/core/MainModel';
+import { type JikkenTimetable, type JikkenTimetableItem, TimeOfDay } from '@/core/MainModel';
 import DummyView from '@/components/DummyView.vue';
 
 let nextJikken: Ref<JikkenTimetableItem | null> = ref(null);
 let timetable: Ref<JikkenTimetable | null> = ref(null);
-let deltaHours: Ref<number | null> = ref(null);
+let deltaTimeStr: Ref<string | null> = ref(null);
+let timerId: Ref<number | null> = ref(null);
 
 onBeforeMount(async () => {
   await waitForJikkenDataAsync();
@@ -52,17 +53,23 @@ onBeforeMount(async () => {
     timetable.value = queryTimetable(curStudent.value.batch);
     nextJikken.value = BuctSchedule.getNextJikken(timetable.value);
   }
-  // 开始每帧循环
+  // 开始每秒更新，对齐到一整秒，误差保证 50 ms 内
+  // 哈哈，什么歪门邪道！
   onTicking();
+  setTimeout(() => {
+    timerId.value = setInterval(onTicking, 1000);
+  }, 950 - new Date().getMilliseconds());
 });
 
 // My Event
 function onTicking() {
-  const next = nextJikken.value;
-  if (next !== null) {
-    deltaHours.value = (next.start.getTime() - Date.now()) / 1000 / 3600;
-  } else deltaHours.value = null;
-  requestAnimationFrame(onTicking);
+  if (nextJikken.value === null) return;
+  const sec = (nextJikken.value.start.getTime() - new Date().getTime()) / 1000;
+  let days = Math.floor(sec / 3600 / 24);
+  let hours = Math.floor(sec / 3600 - days * 24);
+  let minutes = Math.floor(sec / 60 - days * 24 * 60 - hours * 60);
+  let seconds = Math.floor(sec - days * 24 * 3600 - hours * 3600 - minutes * 60);
+  deltaTimeStr.value = `${days} 天 ${hours} 小时 ${minutes} 分 ${seconds} 秒`;
 }
 
 function getDateTimeString(jikken: JikkenTimetableItem) {
@@ -79,12 +86,23 @@ function getDetailTimeString(jikken: JikkenTimetableItem) {
   }
 
   function timeString() {
-    return jikken.start.toLocaleString('zh-CN', {
-      timeZone: 'Asia/Shanghai',
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: true
-    });
+    const { start, end } = BuctSchedule.getJikkenStartAndEnd(jikken);
+    const localize = (time: Date) =>
+      time.toLocaleTimeString('zh-CN', {
+        timeZone: 'Asia/Shanghai',
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true
+      });
+    // TODO: 临时解决 Bad Method
+    if (jikken.period == TimeOfDay.Evening) {
+      const shit = localize(end).replace('下午', '晚上');
+      return `${localize(start)} ~ ${shit}`;
+    } else if (jikken.period == TimeOfDay.Morning) {
+      const shit = localize(end).replace('下午', '中午');
+      return `${localize(start)} ~ ${shit}`;
+    }
+    return `${localize(start)} ~ ${localize(end)}`;
   }
 
   const date = jikken.start;
