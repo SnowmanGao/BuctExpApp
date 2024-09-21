@@ -12,6 +12,7 @@ class ScheduleSystem {
         return ScheduleSystem.getDateAfterDays(start, (week - 1) * 7);
     }
 
+    // 根据给定日期计算周数
     static dateToWeekNumber(start: Date, date: Date): number {
         const diff = date.getTime() - start.getTime();
         return Math.ceil(diff / (7 * 86400 * 1000));
@@ -24,6 +25,7 @@ class ScheduleSystem {
         return newDate;
     }
 
+    // 在给定日期上增加小时，返回新的日期对象
     static getDateAfterHours(date: Date, hours: number): Date {
         if (!Number.isInteger(hours)) throw new Error('Invalid hours, must be integer');
         const newDate = new Date(date);
@@ -31,11 +33,26 @@ class ScheduleSystem {
         return newDate;
     }
 
+    // 在给定日期上增加分钟，返回新的日期对象
     static getDateAfterMinutes(date: Date, minutes: number): Date {
         if (!Number.isInteger(minutes)) throw new Error('Invalid minutes, must be integer');
         const newDate = new Date(date);
         newDate.setMinutes(date.getMinutes() + minutes);
         return newDate;
+    }
+
+    // 将（24小时制）时间转换为适合人类阅读的字符串
+    static formatTimeOfDay(hr: number, min: number) {
+        const h = (hr > 12 ? hr - 12 : hr).toString();
+        const m = min.toString().padStart(2, '0');
+        let tag: string;
+        if (hr < 0) tag = '';
+        else if (hr < 6) tag = '凌晨';
+        else if (hr < 11) tag = '上午';
+        else if (hr < 13) tag = '中午';
+        else if (hr < 19) tag = '下午';
+        else tag = '晚上';
+        return `${tag}${h}:${m}`;
     }
 }
 

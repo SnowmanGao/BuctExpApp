@@ -21,14 +21,14 @@
             <a class="snow-jikken-border ring-blue-400" href="javascript:void(0);" />
           </div>
         </div>
-        <span class="text-base ml-1">距离实验还有 {{ deltaTimeStr }}</span>
+        <span id="time-box" class="text-base ml-1">距离实验还有&nbsp;</span>
       </template>
     </CardView>
     <CardView v-else-if="curStudent === null">
       <template v-slot:title>近期排课？</template>
       <template v-slot:content>请先在设置页面设置您的学号。</template>
     </CardView>
-    <template v-else >
+    <template v-else>
       <div class="snow-card">
         <div class="text-center text-gray-700 text-2xl font-light">Loading...</div>
       </div>
@@ -38,17 +38,17 @@
 
 <script lang="ts" setup>
 import { waitForJikkenDataAsync } from '@/core/FetchSystem';
-import { BuctSchedule } from '@/core/ScheduleSystem';
+import { BuctSchedule, ScheduleSystem } from '@/core/ScheduleSystem';
 import { curStudent, queryTimetable } from '@/core/MainSystem';
-import { onBeforeMount, onUnmounted, ref, type Ref } from 'vue';
+import { onBeforeMount, onMounted, onUnmounted, ref, type Ref } from 'vue';
 import SemesterView from '@/components/SemesterView.vue';
-import { type JikkenTimetable, type JikkenTimetableItem, TimeOfDay } from '@/core/MainModel';
+import { type JikkenTimetable, type JikkenTimetableItem } from '@/core/MainModel';
 import CardView from '@/components/CardView.vue';
 
-let nextJikken: Ref<JikkenTimetableItem | null> = ref(null);
-let timetable: Ref<JikkenTimetable | null> = ref(null);
-let deltaTimeStr: Ref<string | null> = ref(null);
-let timerId: Ref<number | null> = ref(null);
+const nextJikken: Ref<JikkenTimetableItem | null> = ref(null);
+const timetable: Ref<JikkenTimetable | null> = ref(null);
+const timerId: Ref<number | null> = ref(null);
+let deltaTimeEl: HTMLElement | null;
 
 onBeforeMount(async () => {
   await waitForJikkenDataAsync();
@@ -59,7 +59,10 @@ onBeforeMount(async () => {
     timetable.value = queryTimetable(curStudent.value.batch);
     nextJikken.value = BuctSchedule.getNextJikken(timetable.value);
   }
-  // 开始每秒更新，对齐到一整秒，误差保证 50 ms 内
+});
+
+onMounted(() => {
+  // 开始每 100ms 更新一次时间
   onTicking();
   timerId.value = setInterval(onTicking, 100);
 });
@@ -71,17 +74,27 @@ onUnmounted(() => {
 // My Event
 function onTicking() {
   if (nextJikken.value === null) return;
-  const sec = (nextJikken.value.start.getTime() - new Date().getTime()) / 1000;
-  const check = (n: number, s: string) => (n == 0 ? '' : [n, s].join(' '));
-  let days = Math.floor(sec / 3600 / 24);
-  let hours = Math.floor(sec / 3600 - days * 24);
-  let minutes = Math.floor(sec / 60 - days * 24 * 60 - hours * 60);
-  let seconds = Math.floor(sec - days * 24 * 3600 - hours * 3600 - minutes * 60);
-  deltaTimeStr.value = [
-    check(days, '天'),
-    check(hours, '时'),
-    check(minutes, '分'),
-    check(seconds, '秒')
+  if (deltaTimeEl == null) {
+    const span = document.createElement('span');
+    document.getElementById('time-box')!.appendChild(span);
+    deltaTimeEl = span;
+  }
+
+  // 计算剩余时间（秒）
+  const remainingSeconds = (nextJikken.value.start.getTime() - Date.now()) / 1000;
+  // 辅助函数：格式化时间单位
+  const formatTimeUnit = (n: number, unit: string) => (n === 0 ? '' : `${n} ${unit}`);
+  // 计算天、时、分、秒
+  const days = Math.floor(remainingSeconds / 86400);
+  const hours = Math.floor((remainingSeconds % 86400) / 3600);
+  const minutes = Math.floor((remainingSeconds % 3600) / 60);
+  const seconds = Math.floor(remainingSeconds % 60);
+  // 生成时间字符串，局部更新
+  deltaTimeEl.innerText = [
+    formatTimeUnit(days, '天'),
+    formatTimeUnit(hours, '时'),
+    formatTimeUnit(minutes, '分'),
+    formatTimeUnit(seconds, '秒')
   ].join(' ');
 }
 
@@ -91,34 +104,21 @@ function getDateTimeString(jikken: JikkenTimetableItem) {
 }
 
 function getDetailTimeString(jikken: JikkenTimetableItem) {
-  function dayString() {
-    const delta = jikken.week - BuctSchedule.getCurWeekNumber();
-    const prefix = delta ? '下'.repeat(delta) : '本';
-    const week = '日一二三四五六'[date.getDay()];
-    return `${prefix}周${week}`;
-  }
+  const delta_week = jikken.week - BuctSchedule.getCurWeekNumber();
+  const prefix = delta_week ? '下'.repeat(delta_week) : '本';
+  const week = '日一二三四五六'[jikken.start.getDay()];
 
-  function timeString() {
-    const { start, end } = BuctSchedule.getJikkenStartAndEnd(jikken);
-    const localize = (time: Date) =>
-      time.toLocaleTimeString('zh-CN', {
-        timeZone: 'Asia/Shanghai',
-        hour: 'numeric',
-        minute: 'numeric',
-        hour12: true
-      });
-    // TODO: 临时解决 Bad Method
-    if (jikken.period == TimeOfDay.Evening) {
-      const shit = localize(end).replace('下午', '晚上');
-      return `${localize(start)} ~ ${shit}`;
-    } else if (jikken.period == TimeOfDay.Morning) {
-      const shit = localize(end).replace('下午', '中午');
-      return `${localize(start)} ~ ${shit}`;
-    }
-    return `${localize(start)} ~ ${localize(end)}`;
-  }
+  const { start, end } = BuctSchedule.getJikkenStartAndEnd(jikken);
+  const startStr = ScheduleSystem.formatTimeOfDay(start.getHours(), start.getMinutes());
+  const endStr = ScheduleSystem.formatTimeOfDay(end.getHours(), end.getMinutes());
 
-  const date = jikken.start;
-  return `${dayString()} ${timeString()}`;
+  return `${prefix}周${week} ${startStr} ~ ${endStr}`;
 }
 </script>
+
+<style>
+#time-box > span {
+  opacity: 0;
+  animation: SnowOpacityIn 0.2s linear forwards;
+}
+</style>
