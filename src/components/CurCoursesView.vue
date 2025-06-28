@@ -19,7 +19,10 @@
                 <li>&middot;</li>
                 <li>{{ nextJikken.jikken.teacher }}</li>
               </ul>
-              <a class="snow-jikken-border ring-blue-400" href="javascript:void(0);" />
+              <a
+                class="snow-jikken-border ring-blue-400"
+                :href="queryPdfResource(nextJikken.jikken.id)"
+              />
             </div>
           </div>
           <span id="time-box" class="text-base ml-1">距离实验还有&nbsp;</span>
@@ -56,6 +59,7 @@ import { queryJikkenStartAndEndTime } from '@/core/view_models/QueryRealTimes';
 import { queryNextJikken } from '@/core/view_models/QueryNextJikken';
 import { formatTimeOfDay } from '@/core/Utils';
 import dayjs from 'dayjs';
+import { queryPdfResource } from '@/core/view_models/queryPdfResource';
 
 const nextJikken: Ref<JikkenTimetableItem | null> = ref(null);
 const timetable: Ref<JikkenTimetable | null> = ref(null);

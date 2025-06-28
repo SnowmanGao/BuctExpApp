@@ -21,14 +21,13 @@ export function cookStudentData(raw: RawStudent) {
 export function cookJikkenData(raw: RawJikken) {
     const jk = raw.jikken;
     const tt = raw.timetable;
-    for (const id in jk) {
-        jikkenMap.value[id] = {
-            title: jk[id][0],
-            place: jk[id][1],
-            teacher: jk[id][2],
-            info: jk[id][3]
-        };
-    }
+    jikkenMap.value = jk.map((jikken, id) => ({
+        id: id,
+        title: jikken[0],
+        place: jikken[1],
+        teacher: jikken[2],
+        info: jikken[3]
+    }));
     for (const time in tt) {
         if (!isTimeTuple(time)) throw new Error(`${time} 不是一个有效的 TimeTuple`);
         timetableMap.value.set(time, tt[time]);

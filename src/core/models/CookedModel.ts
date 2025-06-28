@@ -1,6 +1,7 @@
 import type { TimeTuple } from '@/core/TimeTuple';
 
 export type JikkenData = {
+    id: number;
     title: string;
     place: string;
     teacher: string;

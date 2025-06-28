@@ -1,6 +1,6 @@
 export type RawJikken = {
     // 依次罗列各个实验的主题、地点、教师、描述
-    jikken: [title: string, place: string, teacher: string, info: string];
+    jikken: [title: string, place: string, teacher: string, info: string][];
     // 索引为实验的离散时间，值为从 实验室编号 到 学生批次号 的映射
     timetable: { [time_tuple: string]: number[] };
 };

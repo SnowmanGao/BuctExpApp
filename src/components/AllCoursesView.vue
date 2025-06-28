@@ -19,7 +19,7 @@
         </div>
         <a
           class="snow-jikken-border ring-blue-400"
-          href="./resources/pdf/1.pdf"
+          :href="queryPdfResource(item.jikken.id)"
           target="_blank"
           rel="noopener noreferrer"
         />
@@ -34,17 +34,20 @@
 
 <script lang="ts" setup>
 import { curStudent } from '@/core/GlobalVars';
-import { type Ref, ref } from 'vue';
+import { onMounted, type Ref, ref } from 'vue';
 import { waitForJikkenDataAsync } from '@/core/FetchSystem';
 import CardView from '@/components/CardView.vue';
 import type { JikkenTimetable } from '@/core/models/CookedModel';
 import { queryTimetable } from '@/core/view_models/QueryPersonTimetable';
+import { queryPdfResource } from '@/core/view_models/queryPdfResource';
 import dayjs from 'dayjs';
 
 const timeTable: Ref<JikkenTimetable> = ref([]);
 
-await waitForJikkenDataAsync();
-if (curStudent.value !== null) {
-  timeTable.value = queryTimetable(curStudent.value.batch);
-}
+onMounted(async () => {
+  await waitForJikkenDataAsync();
+  if (curStudent.value !== null) {
+    timeTable.value = queryTimetable(curStudent.value.batch);
+  }
+});
 </script>
