@@ -3,29 +3,37 @@
     <SemesterView />
   </div>
   <suspense>
-    <CardView v-if="nextJikken">
-      <template v-slot:title>近期实验</template>
-      <template v-slot:content>
-        <span class="text-base ml-1">{{ getDetailTimeString(nextJikken) }} 要做的实验：</span>
-        <div class="snow-stripe flex items-center relative rounded-md p-3">
-          <span class="snow-big-num text-blue-500">{{ nextJikken.nth }}</span>
-          <div>
-            <h3 class="text-base font-medium leading-5">{{ nextJikken.jikken.title }}</h3>
-            <ul class="mt-1 flex space-x-1 text-xs font-normal leading-4 text-gray-500">
-              <li>{{ getDateTimeString(nextJikken) }}</li>
-              <li>&middot;</li>
-              <li>{{ nextJikken.jikken.place }}</li>
-              <li>&middot;</li>
-              <li>{{ nextJikken.jikken.teacher }}</li>
-            </ul>
-            <a class="snow-jikken-border ring-blue-400" href="javascript:void(0);" />
+    <div v-if="nextJikken">
+      <CardView>
+        <template v-slot:title>近期实验</template>
+        <template v-slot:content>
+          <span class="text-base ml-1">{{ getDetailTimeString(nextJikken) }} 要做的实验：</span>
+          <div class="snow-stripe flex items-center relative rounded-md p-3">
+            <span class="snow-big-num text-blue-500">{{ nextJikken.nth }}</span>
+            <div>
+              <h3 class="text-base font-medium leading-5">{{ nextJikken.jikken.title }}</h3>
+              <ul class="mt-1 flex space-x-1 text-xs font-normal leading-4 text-gray-500">
+                <li>{{ getDateTimeString(nextJikken) }}</li>
+                <li>&middot;</li>
+                <li>{{ nextJikken.jikken.place }}</li>
+                <li>&middot;</li>
+                <li>{{ nextJikken.jikken.teacher }}</li>
+              </ul>
+              <a class="snow-jikken-border ring-blue-400" href="javascript:void(0);" />
+            </div>
           </div>
-        </div>
-        <span id="time-box" class="text-base ml-1">距离实验还有&nbsp;</span>
-      </template>
-    </CardView>
+          <span id="time-box" class="text-base ml-1">距离实验还有&nbsp;</span>
+        </template>
+      </CardView>
+      <CardView class="snow-warning-card mt-4">
+        <template v-slot:title>⚠️ 危险性提示</template>
+        <template v-slot:content>
+          <p v-for="(item, index) in nextJikken.jikken.info.split('\n')" :key="index">{{ item }}</p>
+        </template>
+      </CardView>
+    </div>
     <CardView v-else-if="curStudent === null">
-      <template v-slot:title>近期排课？</template>
+      <template v-slot:title>近期实验？</template>
       <template v-slot:content>请先在设置页面设置您的学号。</template>
     </CardView>
     <template v-else>

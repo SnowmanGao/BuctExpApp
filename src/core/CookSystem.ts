@@ -2,7 +2,6 @@ import type { RawJikken, RawStudent } from '@/core/models/RawModel';
 import { jikkenMap, studentMap } from '@/core/GlobalVars';
 import { isTimeTuple } from '@/core/TimeTuple';
 import { timetableMap } from '@/core/GlobalVars';
-import { queryAaaDev } from '@/core/view_models/QueryAaaDev';
 
 // To cook raw data into cooked data
 
