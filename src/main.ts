@@ -6,8 +6,8 @@ import localizedFormat from 'dayjs/plugin/localizedFormat';
 import duration from 'dayjs/plugin/duration'
 import './assets/index.css';
 
-export const VERSION = '0.5.0';
-export const BUILD_TIME = '2025-06-27';
+export const VERSION = '1.1.1';
+export const BUILD_TIME = '2025-06-28';
 
 dayjs.locale('zh-cn');
 dayjs.extend(localizedFormat);
