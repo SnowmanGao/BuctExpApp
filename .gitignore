@@ -16,6 +16,7 @@ coverage
 
 /cypress/videos/
 /cypress/screenshots/
+/public/resources/tools.ipynb
 
 # Editor directories and files
 .vscode/*

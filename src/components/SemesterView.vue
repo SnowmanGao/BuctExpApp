@@ -3,20 +3,19 @@
     <p class="ml-1 font-light text-2xl">教学日历</p>
     <hr />
     <span class="text-base ml-1">⌛ 今天是 {{ getTimeString() }}</span>
-    <span class="text-base ml-1">⏲️ 现在是本学期第 {{ getWeekString() }} 周</span>
+    <span class="text-base ml-1">⏲️ 小学期的第 {{ getDayString() }} 日</span>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { BuctSchedule } from '@/core/ScheduleSystem';
+import { queryCurrentDayNumber } from '@/core/view_models/QueryRealTimes';
+import dayjs from 'dayjs';
 
 function getTimeString(): string {
-  const date = new Date();
-  const day = '日一二三四五六'[date.getDay()];
-  return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 星期${day}`;
+  return dayjs().format('YYYY年M月D日 星期dd');
 }
 
-function getWeekString(): string {
-  return BuctSchedule.getCurWeekNumber().toString();
+function getDayString(): string {
+  return queryCurrentDayNumber().toString();
 }
 </script>

@@ -4,7 +4,7 @@
     <template v-slot:content>
       <span>🆚 版本：v{{ VERSION }} ({{ BUILD_TIME }})</span>
       <span v-if="curStudentId">✅ 查询成功，准许查看排课</span>
-      <span v-else>ℹ️ 开始查询前，请先在下栏输入您的学号</span>
+      <span v-else>ℹ️ 开始查询前，请先输入您的学号</span>
     </template>
   </CardView>
 
@@ -22,7 +22,7 @@
 <script lang="ts" setup>
 import StudentSelectorView from '@/components/StudentSelectorView.vue';
 import StudentInfoView from '@/components/StudentInfoView.vue';
-import { curStudentId } from '@/core/MainSystem';
+import { curStudentId } from '@/core/GlobalVars';
 import CardView from '@/components/CardView.vue';
 import { VERSION, BUILD_TIME } from '@/main';
 </script>

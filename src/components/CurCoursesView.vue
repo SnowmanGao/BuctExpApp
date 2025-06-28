@@ -8,15 +8,15 @@
       <template v-slot:content>
         <span class="text-base ml-1">{{ getDetailTimeString(nextJikken) }} 要做的实验：</span>
         <div class="snow-stripe flex items-center relative rounded-md p-3">
-          <span class="snow-big-num text-blue-500">{{ nextJikken.serial }}</span>
+          <span class="snow-big-num text-blue-500">{{ nextJikken.nth }}</span>
           <div>
-            <h3 class="text-base font-medium leading-5">{{ nextJikken.title }}</h3>
+            <h3 class="text-base font-medium leading-5">{{ nextJikken.jikken.title }}</h3>
             <ul class="mt-1 flex space-x-1 text-xs font-normal leading-4 text-gray-500">
               <li>{{ getDateTimeString(nextJikken) }}</li>
               <li>&middot;</li>
-              <li>{{ nextJikken.place }}</li>
+              <li>{{ nextJikken.jikken.place }}</li>
               <li>&middot;</li>
-              <li>{{ nextJikken.teacher }}</li>
+              <li>{{ nextJikken.jikken.teacher }}</li>
             </ul>
             <a class="snow-jikken-border ring-blue-400" href="javascript:void(0);" />
           </div>
@@ -38,12 +38,16 @@
 
 <script lang="ts" setup>
 import { waitForJikkenDataAsync } from '@/core/FetchSystem';
-import { BuctSchedule, ScheduleSystem } from '@/core/ScheduleSystem';
-import { curStudent, queryTimetable } from '@/core/MainSystem';
+import { curStudent } from '@/core/GlobalVars';
 import { onBeforeMount, onMounted, onUnmounted, ref, type Ref } from 'vue';
 import SemesterView from '@/components/SemesterView.vue';
-import { type JikkenTimetable, type JikkenTimetableItem } from '@/core/MainModel';
 import CardView from '@/components/CardView.vue';
+import type { JikkenTimetable, JikkenTimetableItem } from '@/core/models/CookedModel';
+import { queryTimetable } from '@/core/view_models/QueryPersonTimetable';
+import { queryJikkenStartAndEndTime } from '@/core/view_models/QueryRealTimes';
+import { queryNextJikken } from '@/core/view_models/QueryNextJikken';
+import { formatTimeOfDay } from '@/core/Utils';
+import dayjs from 'dayjs';
 
 const nextJikken: Ref<JikkenTimetableItem | null> = ref(null);
 const timetable: Ref<JikkenTimetable | null> = ref(null);
@@ -57,7 +61,7 @@ onBeforeMount(async () => {
     nextJikken.value = null;
   } else {
     timetable.value = queryTimetable(curStudent.value.batch);
-    nextJikken.value = BuctSchedule.getNextJikken(timetable.value);
+    nextJikken.value = queryNextJikken(timetable.value);
   }
 });
 
@@ -81,44 +85,30 @@ function onTicking() {
   }
 
   // 计算剩余时间（秒）
-  const remainingSeconds = (nextJikken.value.start.getTime() - Date.now()) / 1000;
-  // 辅助函数：格式化时间单位
-  const formatTimeUnit = (n: number, unit: string) => (n === 0 ? '' : `${n} ${unit}`);
-  // 计算天、时、分、秒
-  const days = Math.floor(remainingSeconds / 86400);
-  const hours = Math.floor((remainingSeconds % 86400) / 3600);
-  const minutes = Math.floor((remainingSeconds % 3600) / 60);
-  const seconds = Math.floor(remainingSeconds % 60);
-  // 生成时间字符串，局部更新
-  deltaTimeEl.innerText = [
-    formatTimeUnit(days, '天'),
-    formatTimeUnit(hours, '时'),
-    formatTimeUnit(minutes, '分'),
-    formatTimeUnit(seconds, '秒')
-  ].join(' ');
+  const remainingSeconds = dayjs.duration(-dayjs().diff(nextJikken.value.start_time));
+  deltaTimeEl.innerText = remainingSeconds.format('D 天 H 小时 m 分 s 秒');
 }
 
 function getDateTimeString(jikken: JikkenTimetableItem) {
-  const date = jikken.start;
+  const date = jikken.start_time;
   return `${date.getMonth() + 1}月${date.getDate()}日`;
 }
 
 function getDetailTimeString(jikken: JikkenTimetableItem) {
-  const delta_week = jikken.week - BuctSchedule.getCurWeekNumber();
-  const prefix = delta_week ? '下'.repeat(delta_week) : '本';
-  const week = '日一二三四五六'[jikken.start.getDay()];
+  const week = dayjs(jikken.start_time).format('ddd');
+  // const delta_week = '下'.repeat(dayjs().diff(jikken.start_time, 'week') + 1);
 
-  const { start, end } = BuctSchedule.getJikkenStartAndEnd(jikken);
-  const startStr = ScheduleSystem.formatTimeOfDay(start.getHours(), start.getMinutes());
-  const endStr = ScheduleSystem.formatTimeOfDay(end.getHours(), end.getMinutes());
+  const [start, end] = queryJikkenStartAndEndTime(jikken);
+  const startStr = formatTimeOfDay(start.getHours(), start.getMinutes());
+  const endStr = formatTimeOfDay(end.getHours(), end.getMinutes());
 
-  return `${prefix}周${week} ${startStr} ~ ${endStr}`;
+  return `${week} ${startStr} ~ ${endStr}`;
 }
 </script>
 
 <style>
 #time-box > span {
   opacity: 0;
-  animation: SnowOpacityIn 0.2s linear forwards;
+  animation: SnowOpacityIn 0.3s linear forwards;
 }
 </style>

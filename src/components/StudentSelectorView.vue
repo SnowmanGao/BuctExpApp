@@ -12,7 +12,7 @@
         <ComboboxInput
           id="cb-input"
           ref="inputRef"
-          :displayValue="(person) => (person as IPersonOrNull)?.sid ?? ''"
+          :displayValue="(sid) => (sid as string) ?? ''"
           class="w-full py-2 pl-3 pr-10 text-base leading-5 text-gray-900"
           placeholder="请输入学号..."
           type="search"
@@ -44,10 +44,10 @@
             </span>
           </div>
           <ComboboxOption
-            v-for="person in filteredPeople"
-            :key="person.sid"
+            v-for="sid in filteredPeople"
+            :key="sid"
             v-slot="{ selected, active }"
-            :value="person"
+            :value="sid"
             as="template"
             @click="onSelectedPerson()"
           >
@@ -60,13 +60,13 @@
             >
               <span class="truncate flex">
                 <span :class="selected ? 'text-white' : 'text-grey-900'">
-                  {{ person.sid }}
+                  {{ sid }}
                 </span>
                 <span
                   :class="selected ? 'text-slate-200' : 'text-gray-400'"
-                  class="ml-2 text-sm leading-[1.5rem]"
+                  class="ml-4 text-sm leading-[1.5rem]"
                 >
-                  @{{ person.class }}
+                  @{{ studentMap.get(sid)?.class }}
                 </span>
               </span>
 
@@ -86,7 +86,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, type ComputedRef, onMounted, type Ref, ref } from 'vue';
+import { computed, onMounted, type Ref, ref } from 'vue';
 import {
   Combobox,
   ComboboxButton,
@@ -96,18 +96,12 @@ import {
   TransitionRoot
 } from '@headlessui/vue';
 import { CheckIcon, ChevronUpDownIcon, ExclamationCircleIcon } from '@heroicons/vue/20/solid';
-import { curStudentId, studentDict } from '@/core/MainSystem';
-import { arrayTake, debounce, scrollToBottom, scrollToTop } from '@/core/Utils';
+import { curStudentId, studentMap } from '@/core/GlobalVars';
+import { debounce, scrollToBottom, scrollToTop } from '@/core/Utils';
 import { StorageSystem } from '@/core/StorageSystem';
 import SnowTag from '@/components/SnowTag.vue';
 import { waitForStudentDataAsync } from '@/core/FetchSystem';
-
-interface IPerson {
-  sid: string;
-  class: string;
-}
-
-type IPersonOrNull = IPerson | null;
+import { querySidWithPrefix } from '@/core/view_models/QuerySidWithPrefix';
 
 // Vue Event
 onMounted(async () => {
@@ -134,14 +128,14 @@ const onSelectedPerson = debounce(() => {
   // 必须保证 selected 不为空！
   inputElement.blur();
   scrollToTop();
-  curStudentId.value = selected.value!.sid ?? null;
+  curStudentId.value = selected.value ?? null;
   StorageSystem.saveSid(curStudentId.value);
 }, 500);
 
 function clearCurStudent() {
   ComboboxHack.close();
   curStudentId.value = null;
-  selected.value = null;
+  selected.value = '';
   StorageSystem.saveSid(null);
 }
 
@@ -168,8 +162,8 @@ function onInputBlur() {
   if (inputElement.value == '') clearCurStudent();
 }
 
-// 当前选中的人，用 IPerson 表示
-const selected: Ref<IPersonOrNull> = ref(null);
+// 当前选中的人，用 Student ID 表示
+const selected: Ref<string> = ref('');
 // 用户实际输入的内容（单向绑定输入框内容）
 const query = ref('');
 // 输入框的 HTMLElement Ref
@@ -180,7 +174,7 @@ const cbRef = ref();
 // 简写，获取输入框的 HTMLElement 对象
 let inputElement: HTMLInputElement;
 
-// Hacking class for HeadlessUI
+// Hacking HeadlessUI
 class ComboboxHack {
   static cb$: any;
   static provides: any;
@@ -224,18 +218,10 @@ const colorClassMap = computed(() => {
   return 'border-grey-600';
 });
 
-// 将所有学生数据转化为便于展示的形态
-const people: ComputedRef<IPerson[]> = computed(() => {
-  return Object.entries(studentDict.value).map(([sid, data]) => ({
-    sid: sid,
-    class: data.class
-  }));
-});
-
 // 获取当前所有的可选项
 const filteredPeople = computed(() => {
   if (query.value == '') return [];
-  return arrayTake(people.value, (p) => p.sid.includes(query.value.trim()), 5);
+  return querySidWithPrefix(query.value.trim(), 5);
 });
 </script>
 

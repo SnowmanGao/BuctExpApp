@@ -1,23 +1,16 @@
-import {
-    isJikkenLoaded,
-    isStudentLoaded,
-    transJikkenData,
-    transStudentData
-} from '@/core/MainSystem';
+import { jikkenMap, studentMap } from '@/core/GlobalVars';
+import { cookJikkenData, cookStudentData } from '@/core/CookSystem';
 
 export async function waitForJikkenDataAsync() {
-    if (isJikkenLoaded.value) return;
-    console.log("ever can't we suspend the time.");
+    if (jikkenMap.value.length) return;
     const resp = await fetch('/resources/jikken_map.json');
     const json = await resp.json();
-    isJikkenLoaded.value = true;
-    transJikkenData(json);
+    cookJikkenData(json);
 }
 
 export async function waitForStudentDataAsync() {
-    if (isStudentLoaded.value) return;
+    if (studentMap.value.size) return;
     const resp = await fetch('/resources/student_map.json');
     const json = await resp.json();
-    transStudentData(json);
-    isStudentLoaded.value = true;
+    cookStudentData(json);
 }

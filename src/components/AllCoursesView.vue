@@ -3,18 +3,18 @@
     <ul class="space-y-2">
       <li
         v-for="(item, index) in timeTable"
-        :key="`${item.week}_${item.period}_${item.serial}`"
+        :key="item.nth"
         class="flex items-center relative rounded-md p-3 hover:bg-gray-100"
       >
         <span class="snow-big-num text-blue-500">{{ index + 1 }}</span>
         <div>
-          <h3 class="text-base font-medium leading-5">{{ item.title }}</h3>
+          <h3 class="text-base font-medium leading-5">{{ item.jikken.title }}</h3>
           <ul class="mt-1 flex space-x-1 text-xs font-normal leading-4 text-gray-500">
-            <li>第{{ item.week }}周</li>
+            <li>第{{ parseTimeTuple(item.start_time_tuple)[0] }}日</li>
             <li>&middot;</li>
-            <li>{{ item.place }}</li>
+            <li>{{ item.jikken.place }}</li>
             <li>&middot;</li>
-            <li>{{ item.teacher }}</li>
+            <li>{{ item.jikken.teacher }}</li>
           </ul>
         </div>
         <a class="snow-jikken-border ring-blue-400" href="javascript:void(0);" />
@@ -28,11 +28,13 @@
 </template>
 
 <script lang="ts" setup>
-import { curStudent, queryTimetable } from '@/core/MainSystem';
+import { curStudent } from '@/core/GlobalVars';
 import { type Ref, ref } from 'vue';
-import type { JikkenTimetable } from '@/core/MainModel';
 import { waitForJikkenDataAsync } from '@/core/FetchSystem';
 import CardView from '@/components/CardView.vue';
+import type { JikkenTimetable } from '@/core/models/CookedModel';
+import { queryTimetable } from '@/core/view_models/QueryPersonTimetable';
+import { parseTimeTuple } from '@/core/TimeTuple';
 
 const timeTable: Ref<JikkenTimetable> = ref([]);
 
