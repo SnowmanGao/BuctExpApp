@@ -6,8 +6,9 @@ import type { JikkenTimetableItem } from '@/core/models/CookedModel';
 function queryTimeFromTuple(time_tuple: TimeTuple): Date {
     const [day, period] = parseTimeTuple(time_tuple);
     return dayjs(day_zero)
+        .startOf('day')
         .add(parseInt(day), 'day') //偏移天数
-        .hour(time_of_day[parseInt(period)]) //偏移小时
+        .add(time_of_day[parseInt(period)], 'hour') //偏移小时
         .toDate();
 }
 
